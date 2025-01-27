@@ -22,5 +22,5 @@ class RedisClient:
     def consume_website_url(self):
         urls = self.redis_client.spop(REDIS_KEY, 5) or []
         for url in urls:
-            general_newspaper = Newspaper.create_scraper()
+            general_newspaper = Newspaper.run_scraper()
             general_newspaper.scrape_website(url)

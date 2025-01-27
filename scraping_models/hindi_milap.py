@@ -1,6 +1,7 @@
 from playwright.sync_api import sync_playwright
 import time
 from general_models.mongodb_client import MongoDBClient
+from general_models.image_database import Boto3DB
 from general_models.image_mongo import MongoImage
 from datetime import datetime, timezone
 from utils import download_images, image_dictionary
@@ -15,26 +16,27 @@ class HindiMilap:
 
         return date_string
 
-    def test(self, new_page, mongodb_client, date, counter):
+    def test(self, new_page, mongodb_client, boto3_client: Boto3DB, date, counter):
         time.sleep(1)
         image_selector = ".carousel-item.active > .parent-container > img"
         new_page.wait_for_selector(image_selector, state="attached", timeout=5000)
         image_src = new_page.locator(image_selector).last.get_attribute("src")
 
-        image_dict = image_dictionary(image_src, date, counter, "HINDI_MILAP")
-        # image_dict = {
-        #     "image": image_src,
-        #     "image_name": f"HINDI MILAP {date} {counter}",
-        #     "date_created": datetime.now(timezone.utc),
-        #     "date_updated": datetime.now(timezone.utc),
-        #     "platform": "HINDI MILAP",
-        #     "visited": True,
-        # }
+        image_dict = image_dictionary(
+            image_src, date, counter, "HINDI_MILAP", "HINDI MILAP"
+        )
+
         image_instance = MongoImage(**image_dict)
 
         #! insert then download
         mongodb_client.insert_image(image_instance.model_dump())
-        download_images(image_src, "hindi_milap", "HINDI MILAP", date, counter)
+
+        date_list = date.split("-")
+        new_date = f"{date_list[1]}-{date_list[0]}-{date_list[2][2:]}"
+
+        boto3_client.upload_image(image_src, "HINDI_MILAP", new_date, counter)
+
+        # download_images(image_src, "hindi_milap", "HINDI MILAP", date, counter)
 
     def scrape_website(self, url):
         start_time = time.time()
@@ -64,14 +66,15 @@ class HindiMilap:
                 # date splitter
                 self.date_splitter(date)
 
-                mongodb_client = MongoDBClient("hindi_milap", f"hindi_milap-{date}")
+                mongodb_client = MongoDBClient()
+                boto3_client = Boto3DB()
                 counter = 1
                 while next_button.count() > 0:
-                    self.test(new_page, mongodb_client, date, counter)
+                    self.test(new_page, mongodb_client, boto3_client, date, counter)
                     next_button.last.click()
                     counter += 1
 
-                self.test(new_page, mongodb_client, date)
+                self.test(new_page, mongodb_client, boto3_client, date, counter)
 
             browser.close()
 

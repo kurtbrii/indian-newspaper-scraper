@@ -21,12 +21,13 @@ def download_images(image_src, folder_path, publication_name, publication_date, 
     print("Image downloaded successfully!")
 
 
-def image_dictionary(image_src, date, counter, platform) -> dict:
+def image_dictionary(image_src, date, counter, platform, website_name) -> dict:
     return {
         "image": image_src,
         "image_name": f"{platform} {date} {counter}",
         "date_created": datetime.now(timezone.utc),
         "date_updated": datetime.now(timezone.utc),
+        "website": website_name,
         "platform": platform,
         "visited": True,
     }

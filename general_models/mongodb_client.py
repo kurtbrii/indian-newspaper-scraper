@@ -3,13 +3,10 @@ from constants import CONNECTION_URL
 
 
 class MongoDBClient:
-    def __init__(self, database_name, collection_name):
+    def __init__(self):
         self.client = MongoClient(CONNECTION_URL)
-        self.database = self.client[database_name]
-        self.collection = self.database[collection_name]
-
-    def find_duplicate(self):
-        pass
+        self.database = self.client["newspapers"]
+        self.collection = self.database["newspaper_collection"]
 
     def insert_image(self, images_dict: dict):
         self.collection.update_one(
